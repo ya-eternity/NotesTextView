@@ -27,6 +27,7 @@
 		0D8F079A24850A7600DA10E4 /* ColorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D8F079324850A7600DA10E4 /* ColorPickerView.swift */; };
 		0D8F079B24850A7600DA10E4 /* TextStyleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D8F079424850A7600DA10E4 /* TextStyleView.swift */; };
 		0D8F079D24850AB000DA10E4 /* UIView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D8F079C24850AB000DA10E4 /* UIView+Layout.swift */; };
+		9D5F120C2F15E47E0040BDC0 /* NotesTextView+Lists.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D5F120B2F15E47E0040BDC0 /* NotesTextView+Lists.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +53,7 @@
 		0D8F079324850A7600DA10E4 /* ColorPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorPickerView.swift; sourceTree = "<group>"; };
 		0D8F079424850A7600DA10E4 /* TextStyleView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextStyleView.swift; sourceTree = "<group>"; };
 		0D8F079C24850AB000DA10E4 /* UIView+Layout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIView+Layout.swift"; sourceTree = "<group>"; };
+		9D5F120B2F15E47E0040BDC0 /* NotesTextView+Lists.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotesTextView+Lists.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +117,7 @@
 		0D8F077C24850A4400DA10E4 /* NotesTextView */ = {
 			isa = PBXGroup;
 			children = (
+				9D5F120B2F15E47E0040BDC0 /* NotesTextView+Lists.swift */,
 				0D8F078224850A5A00DA10E4 /* NotesTextView.swift */,
 				0D8F078024850A5A00DA10E4 /* NotesTextView+Indents.swift */,
 				0D8F077D24850A5A00DA10E4 /* NotesTextView+KeyboardManagement.swift */,
@@ -266,6 +269,7 @@
 				0D8F079524850A7600DA10E4 /* TextStyleKeyboardView.swift in Sources */,
 				0D8F079B24850A7600DA10E4 /* TextStyleView.swift in Sources */,
 				0D8F078724850A5A00DA10E4 /* NotesTextView+TextStyleKeyboardViewDelegate.swift in Sources */,
+				9D5F120C2F15E47E0040BDC0 /* NotesTextView+Lists.swift in Sources */,
 				0D8F079624850A7600DA10E4 /* TransformedColor.swift in Sources */,
 				0D8F078524850A5A00DA10E4 /* NotesTextView+KeyboardManagement.swift in Sources */,
 				0D8F079D24850AB000DA10E4 /* UIView+Layout.swift in Sources */,

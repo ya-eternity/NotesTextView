@@ -15,6 +15,12 @@ public class NotesTextView: UITextView {
         case body
         case serif
     }
+    
+    enum ListType: String {
+        case none = "none"
+        case ordered = "ordered"
+        case unordered = "unordered"
+    }
 
     let textFieldAnimationDuration: TimeInterval = 0.3
 
@@ -45,6 +51,7 @@ public class NotesTextView: UITextView {
     }
 
     var keyboardHeight: CGFloat = 0.0
+    var systemColorPickerForTextColor: Bool = true
 
     override public var selectedTextRange: UITextRange? {
         didSet {
@@ -140,15 +147,17 @@ public class NotesTextView: UITextView {
         // next line should be body font
 
         if text == "\n" {
-            if let font = typingAttributes[NSAttributedString.Key.font] as? UIFont {
-                if font == NotesFontProvider.shared.headingFont || font == NotesFontProvider.shared.titleFont {
-                    typingAttributes[NSAttributedString.Key.font] = NotesFontProvider.shared.bodyFont
-                    updateVisualForKeyboard()
-                }
+
+            if let font = typingAttributes[.font] as? UIFont,
+               font == NotesFontProvider.shared.headingFont ||
+               font == NotesFontProvider.shared.titleFont {
+
+                typingAttributes[.font] = NotesFontProvider.shared.bodyFont
+                updateVisualForKeyboard()
             }
 
-            if typingAttributes[NSAttributedString.Key.backgroundColor] != nil {
-                typingAttributes[NSAttributedString.Key.backgroundColor] = UIColor.clear
+            if typingAttributes[.backgroundColor] != nil {
+                typingAttributes[.backgroundColor] = UIColor.clear
             }
         }
 
@@ -184,6 +193,16 @@ public class NotesTextView: UITextView {
     }
 
     @objc private func textDidChange(_: Notification) {
+        // 确保如果当前位置的段落有列表，typingAttributes 也包含段落样式
+        let coreString = textStorage.string as NSString
+        let paraGraphRange = coreString.paragraphRange(for: selectedRange)
+        if paraGraphRange.length > 0 {
+            if let paragraphStyle = textStorage.attribute(.paragraphStyle, at: paraGraphRange.location, effectiveRange: nil) as? NSParagraphStyle,
+               paragraphStyle.textLists.count > 0 {
+                // 如果段落有列表，更新 typingAttributes 的段落样式
+                typingAttributes[.paragraphStyle] = paragraphStyle
+            }
+        }
         updateVisualForKeyboard()
     }
 
@@ -206,6 +225,9 @@ public class NotesTextView: UITextView {
         styleKeyboard.leftAlignButton.addTarget(self, action: #selector(useLeftAlignment), for: .touchUpInside)
         styleKeyboard.centerAlignButton.addTarget(self, action: #selector(useCenterAlignment), for: .touchUpInside)
         styleKeyboard.rightAlignButton.addTarget(self, action: #selector(useRightAlignment), for: .touchUpInside)
+
+        styleKeyboard.orderedListButton.addTarget(self, action: #selector(toggleOrderedList), for: .touchUpInside)
+        styleKeyboard.unorderedListButton.addTarget(self, action: #selector(toggleUnorderedList), for: .touchUpInside)
     }
 
     private func prepareAccessoryView() {

@@ -11,6 +11,7 @@ import UIKit
 protocol TextStyleKeyboardViewDelegate: AnyObject {
     func didSelectTextColor(selectedColor: UIColor)
     func didSelectHighlightColor(selectedColor: UIColor)
+    func didRequestSystemColorPicker(forTextColor: Bool)
 }
 
 class TextStyleKeyboardView: UIView {
@@ -31,6 +32,11 @@ class TextStyleKeyboardView: UIView {
 
     let leftIndentButton = OneStateButton()
     let rightIndentButton = OneStateButton()
+
+    // MARK: - List Buttons
+
+    let orderedListButton = TwoStateButton()
+    let unorderedListButton = TwoStateButton()
 
     // MARK: - Text Style View
 
@@ -72,6 +78,10 @@ class TextStyleKeyboardView: UIView {
     // MARK: - Color Segmented Control
 
     let colorSegmentControl = UISegmentedControl(items: ["fontColor", "hightlightColor"])
+    
+    // MARK: - System Color Picker Button
+    
+    let systemColorPickerButton = UIButton()
 
     // MARK: - Return Button
 
@@ -89,6 +99,7 @@ class TextStyleKeyboardView: UIView {
 
     let formatingStack = UIStackView()
     let indentStack = UIStackView()
+    let listStack = UIStackView()
     let textStyleStack = UIStackView()
     let textAlignmentStack = UIStackView()
     let colorStack = UIStackView()
@@ -96,7 +107,7 @@ class TextStyleKeyboardView: UIView {
 
     // MARK: - SFSymbol Config
 
-    let iconConfig = UIImage.SymbolConfiguration(pointSize: 25, weight: .regular, scale: .medium)
+    let iconConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .medium)
 
     weak var delegate: TextStyleKeyboardViewDelegate?
 
@@ -115,7 +126,7 @@ class TextStyleKeyboardView: UIView {
 
         keyboardContainerView.addSubview(completeStack)
 
-        scrollContainerView.anchor(top: keyboardContainerView.topAnchor, leading: completeStack.leadingAnchor, bottom: nil, trailing: completeStack.trailingAnchor, padding: .init(top: 20, left: 0, bottom: 0, right: 60))
+        scrollContainerView.anchor(top: keyboardContainerView.topAnchor, leading: completeStack.leadingAnchor, bottom: nil, trailing: completeStack.trailingAnchor, padding: .init(top: 20, left: 0, bottom: 0, right: 40))
 
         styleScrollView.contentInset = .init(top: 0, left: styleScrollInset, bottom: 0, right: styleScrollInset)
         scrollContainerView.constrainHeight(constant: buttonHeight)
@@ -145,7 +156,7 @@ class TextStyleKeyboardView: UIView {
         gradientMask.frame = scrollContainerView.bounds
     }
 
-    func typingAttributeUpdates(currentTextStyle: NotesTextView.TextStyle, isBold: Bool, isItalics: Bool, isUnderline: Bool, hasStrikethrough: Bool, disableLeftIndent: Bool, disableRightIndent: Bool, textColor: UIColor?, highlighColor: UIColor?, textAlignment: NSTextAlignment) {
+    func typingAttributeUpdates(currentTextStyle: NotesTextView.TextStyle, isBold: Bool, isItalics: Bool, isUnderline: Bool, hasStrikethrough: Bool, disableLeftIndent: Bool, disableRightIndent: Bool, textColor: UIColor?, highlighColor: UIColor?, textAlignment: NSTextAlignment, listType: NotesTextView.ListType) {
         titleButton.isActive = currentTextStyle == .title
         headingButton.isActive = currentTextStyle == .heading
         bodyButton.isActive = currentTextStyle == .body
@@ -161,15 +172,50 @@ class TextStyleKeyboardView: UIView {
         leftIndentButton.isEnabled = !disableLeftIndent
         rightIndentButton.isEnabled = !disableRightIndent
 
+        orderedListButton.isActive = listType == .ordered
+        unorderedListButton.isActive = listType == .unordered
+
         // Dynamic colors [Colors with Dark Mode] when retrieved back from CoreData doesn't compare with UIColors even if they are same
         // but if compared with their cgcolors then they compare the same.
 
+        // 检查文字颜色
         if let selectedTextColor = textColor, let transformedColor = textColorMap.filter({ $0.appliedColor.cgColor == selectedTextColor.cgColor }).first, textColors.contains(transformedColor.visualColor) {
             textColorPicker.selectedColor = transformedColor.visualColor
+            // 如果颜色在预设列表中，移除系统颜色选择器按钮的边框
+            if colorSegmentControl.selectedSegmentIndex == 0 {
+                systemColorPickerButton.layer.borderWidth = 0
+                systemColorPickerButton.tintColor = .systemGray
+            }
+        } else if textColor != nil {
+            // 如果颜色不在预设列表中，说明使用了系统颜色选择器的颜色
+            // 清除文字颜色选择器的选中状态（设置一个不在列表中的颜色）
+            textColorPicker.selectedColor = UIColor(white: 0, alpha: 0.001) // 使用一个不在列表中的颜色来清除选中状态
+            if colorSegmentControl.selectedSegmentIndex == 0 {
+                // 添加圆形边框
+                systemColorPickerButton.layer.borderWidth = 3.0
+                systemColorPickerButton.layer.borderColor = textColor?.cgColor
+                systemColorPickerButton.layer.cornerRadius = 20
+            }
         }
 
-        if let selectedHighlightColor = highlighColor, let transformedColor = highlightColorMap.filter({ $0.appliedColor.cgColor == selectedHighlightColor.cgColor }).first, highLightColors.contains(transformedColor.visualColor) {
+        // 检查背景色
+        if let selectedHighlightColor = highlighColor, selectedHighlightColor != UIColor.clear, let transformedColor = highlightColorMap.filter({ $0.appliedColor.cgColor == selectedHighlightColor.cgColor }).first, highLightColors.contains(transformedColor.visualColor) {
             highlightColorPicker.selectedColor = transformedColor.visualColor
+            // 如果颜色在预设列表中，移除系统颜色选择器按钮的边框
+            if colorSegmentControl.selectedSegmentIndex == 1 {
+                systemColorPickerButton.layer.borderWidth = 0
+                systemColorPickerButton.tintColor = .systemGray
+            }
+        } else if highlighColor != nil && highlighColor != UIColor.clear {
+            // 如果颜色不在预设列表中，说明使用了系统颜色选择器的颜色
+            // 清除背景色选择器的选中状态（设置一个不在列表中的颜色）
+            highlightColorPicker.selectedColor = UIColor(white: 0, alpha: 0.001) // 使用一个不在列表中的颜色来清除选中状态
+            if colorSegmentControl.selectedSegmentIndex == 1 {
+                // 添加圆形边框
+                systemColorPickerButton.layer.borderWidth = 2.0
+                systemColorPickerButton.layer.borderColor = highlighColor?.cgColor
+                systemColorPickerButton.layer.cornerRadius = buttonHeight / 2
+            }
         }
 
         leftAlignButton.isActive = textAlignment == .left
@@ -183,6 +229,7 @@ class TextStyleKeyboardView: UIView {
         setupBoldItalicUnderlineButtons()
         setupTextAlignmentStack()
         setupIndentButtons()
+        setupListButtons()
         setupTextStyleScrollView()
         setupColorStack()
         setupCompleteStack()
@@ -288,6 +335,33 @@ class TextStyleKeyboardView: UIView {
         rightIndentButton.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
     }
 
+    private func setupListButtons() {
+        let orderedListImage = UIImage(systemName: "list.number", withConfiguration: iconConfig)
+        orderedListButton.setImage(orderedListImage, for: .normal)
+        orderedListButton.isActive = false
+
+        let unorderedListImage = UIImage(systemName: "list.bullet", withConfiguration: iconConfig)
+        unorderedListButton.setImage(unorderedListImage, for: .normal)
+        unorderedListButton.isActive = false
+
+        orderedListButton.constrainWidth(constant: buttonWidth)
+        unorderedListButton.constrainWidth(constant: buttonWidth)
+
+        orderedListButton.constrainHeight(constant: buttonHeight)
+        unorderedListButton.constrainHeight(constant: buttonHeight)
+
+        listStack.addArrangedSubview(orderedListButton)
+        listStack.addArrangedSubview(unorderedListButton)
+
+        listStack.spacing = buttonSpacing
+
+        orderedListButton.layer.cornerRadius = buttonCornerRadius
+        orderedListButton.layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
+
+        unorderedListButton.layer.cornerRadius = buttonCornerRadius
+        unorderedListButton.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
+    }
+
     private func setupTextStyleScrollView() {
         titleButton.label.text = "Title"
         titleButton.label.font = NotesFontProvider.shared.titleFont
@@ -378,7 +452,7 @@ class TextStyleKeyboardView: UIView {
         colorSegmentControl.setImage(textIcon, forSegmentAt: 0)
         colorSegmentControl.setImage(hightlightIcon, forSegmentAt: 1)
 
-        colorSegmentControl.constrainHeight(constant: buttonHeight)
+        colorSegmentControl.constrainHeight(constant: 40)
         colorSegmentControl.constrainWidth(constant: 105)
 
         // setup Text Color Picker
@@ -393,10 +467,18 @@ class TextStyleKeyboardView: UIView {
             highlightColorPicker.selectedColor = firstColor
         }
 
+        // setup System Color Picker Button
+        let colorPickerImage = UIImage(systemName: "eyedropper", withConfiguration: iconConfig)
+        systemColorPickerButton.setImage(colorPickerImage, for: .normal)
+        systemColorPickerButton.tintColor = .systemGray
+        systemColorPickerButton.constrainHeight(constant: 40)
+        systemColorPickerButton.constrainWidth(constant: 40)
+        systemColorPickerButton.addTarget(self, action: #selector(systemColorPickerButtonTapped), for: .touchUpInside)
+
         let paddingView = UIView()
         paddingView.constrainWidth(constant: 20)
 
-        for subview in [colorSegmentControl, textColorPicker, highlightColorPicker, paddingView] {
+        for subview in [systemColorPickerButton, textColorPicker, highlightColorPicker, colorSegmentControl, paddingView] {
             colorStack.addArrangedSubview(subview)
         }
 
@@ -418,12 +500,17 @@ class TextStyleKeyboardView: UIView {
             highlightColorPicker.isHidden = false
         }
     }
+    
+    @objc private func systemColorPickerButtonTapped() {
+        let isTextColor = colorSegmentControl.selectedSegmentIndex == 0
+        delegate?.didRequestSystemColorPicker(forTextColor: isTextColor)
+    }
 
     private func setupCompleteStack() {
         let spacer1 = UIView()
         spacer1.constrainWidth(constant: 10)
 
-        let formattingStack = UIStackView(arrangedSubviews: [formatingStack, spacer1])
+        let formattingStack = UIStackView(arrangedSubviews: [formatingStack, listStack, spacer1])
         formattingStack.spacing = 20
 
         let spacer2 = UIView()
@@ -490,6 +577,10 @@ class TextStyleKeyboardView: UIView {
 
 extension TextStyleKeyboardView: ColorPickerViewDelegate {
     func didSelectColor(colorPicker: ColorPickerView, selectedColor: UIColor) {
+        // 选择现有颜色时，移除系统颜色选择器按钮的边框
+        systemColorPickerButton.layer.borderWidth = 0
+        systemColorPickerButton.tintColor = .systemGray
+        
         if colorPicker == textColorPicker {
             if let appliedTransformedColor = textColorMap.filter({ $0.visualColor == selectedColor }).first {
                 delegate?.didSelectTextColor(selectedColor: appliedTransformedColor.appliedColor)

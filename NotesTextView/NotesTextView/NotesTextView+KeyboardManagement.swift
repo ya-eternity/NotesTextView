@@ -164,7 +164,9 @@ extension NotesTextView {
         let selectedTextColor = typingAttributes[.foregroundColor] as? UIColor
         let selectedHighlightColor = typingAttributes[.backgroundColor] as? UIColor ?? UIColor.clear
 
-        styleKeyboard.typingAttributeUpdates(currentTextStyle: currentTextStyle, isBold: isBold, isItalics: isItalics, isUnderline: hasUnderline, hasStrikethrough: hasStrikethrough, disableLeftIndent: shouldLeftIndentDisabled, disableRightIndent: shouldRightIndentDisabled, textColor: selectedTextColor, highlighColor: selectedHighlightColor, textAlignment: currentAlignment)
+        let currentListType = getCurrentListType()
+
+        styleKeyboard.typingAttributeUpdates(currentTextStyle: currentTextStyle, isBold: isBold, isItalics: isItalics, isUnderline: hasUnderline, hasStrikethrough: hasStrikethrough, disableLeftIndent: shouldLeftIndentDisabled, disableRightIndent: shouldRightIndentDisabled, textColor: selectedTextColor, highlighColor: selectedHighlightColor, textAlignment: currentAlignment, listType: currentListType)
 
         leftIndentButtonMain.isEnabled = !shouldLeftIndentDisabled
         rightIndentButtonMain.isEnabled = !shouldRightIndentDisabled
