@@ -142,7 +142,6 @@ extension NotesTextView {
         }
 
         let currentIndent = getCurrentIndent()
-
         shouldLeftIndentDisabled = currentIndent == minimumIndent
         shouldRightIndentDisabled = currentIndent == maximumIndent
 
