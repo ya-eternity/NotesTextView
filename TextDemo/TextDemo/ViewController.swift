@@ -33,6 +33,10 @@ class ViewController: UIViewController {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let text = textView.attributedText else { return }
+//        AirPrintDiscovery.pickPrinter(from: self) { printer in
+//            guard let p = printer else { return }
+//            print(p)
+//        }
         printRichText(text)
     }
     
@@ -49,5 +53,28 @@ class ViewController: UIViewController {
         controller.printInfo = info
         controller.printFormatter = formatter
         controller.present(animated: true)
+    }
+}
+
+
+final class AirPrintDiscovery {
+
+    static func pickPrinter(from vc: UIViewController,
+                            sourceView: UIView? = nil,
+                            completion: @escaping (UIPrinter?) -> Void) {
+        let picker = UIPrinterPickerController(initiallySelectedPrinter: nil)
+
+        // iPad 推荐 anchor 到某个 view；iPhone 用 view.bounds 也行
+        let rect = sourceView?.bounds ?? vc.view.bounds
+        let inView = sourceView ?? vc.view!
+
+        picker.present(from: rect, in: inView, animated: true) { controller, userDidSelect, error in
+            if let error = error {
+                print("UIPrinterPicker error: \(error)")
+                completion(nil)
+                return
+            }
+            completion(userDidSelect ? controller.selectedPrinter : nil)
+        }
     }
 }

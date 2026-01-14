@@ -8,6 +8,10 @@
 
 import UIKit
 
+private let minimumFontSize: CGFloat = 8
+private let maximumFontSize: CGFloat = 72
+private let fontSizeStep: CGFloat = 1
+
 extension NotesTextView {
     private func changeTrait(trait: UIFontDescriptor.SymbolicTraits) {
         let initialFont: UIFont?
@@ -124,5 +128,104 @@ extension NotesTextView {
         }
 
         updateVisualForKeyboard()
+    }
+
+    @objc func increaseFontSize() {
+        adjustFontSize(by: fontSizeStep)
+    }
+
+    @objc func decreaseFontSize() {
+        adjustFontSize(by: -fontSizeStep)
+    }
+
+    @objc func showFontPicker() {
+        if #available(iOS 13.0, *) {
+            let config = UIFontPickerViewController.Configuration()
+            config.includeFaces = false
+
+            let fontPicker = UIFontPickerViewController(configuration: config)
+            fontPicker.delegate = self
+
+            if let currentFont = typingAttributes[.font] as? UIFont {
+                fontPicker.selectedFontDescriptor = currentFont.fontDescriptor
+            }
+
+            if let viewController = hostingViewController ?? findViewController() {
+                viewController.present(fontPicker, animated: true)
+            }
+        }
+    }
+
+    func applyFontDescriptor(_ descriptor: UIFontDescriptor) {
+        guard selectedRange.location != NSNotFound else { return }
+
+        saveCurrentStateAndRegisterForUndo()
+
+        let baseFont: UIFont? = {
+            if selectedRange.length == 0 {
+                return typingAttributes[.font] as? UIFont
+            }
+            return textStorage.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? UIFont
+        }()
+
+        let baseSize = baseFont?.pointSize ?? NotesFontProvider.shared.bodyFont.pointSize
+        let baseTraits = baseFont?.fontDescriptor.symbolicTraits ?? []
+        let resolvedDescriptor = descriptor.withSymbolicTraits(baseTraits) ?? descriptor
+        let updatedFont = UIFont(descriptor: resolvedDescriptor, size: baseSize)
+
+        if selectedRange.length != 0 {
+            textStorage.enumerateAttribute(.font, in: selectedRange, options: .longestEffectiveRangeNotRequired) { value, range, _ in
+                let rangeFont = (value as? UIFont) ?? baseFont ?? NotesFontProvider.shared.bodyFont
+                let rangeTraits = rangeFont.fontDescriptor.symbolicTraits
+                let rangeDescriptor = descriptor.withSymbolicTraits(rangeTraits) ?? descriptor
+                let appliedFont = UIFont(descriptor: rangeDescriptor, size: rangeFont.pointSize)
+
+                textStorage.beginEditing()
+                textStorage.addAttribute(.font, value: appliedFont, range: range)
+                textStorage.endEditing()
+            }
+        }
+
+        typingAttributes[.font] = updatedFont
+        updateVisualForKeyboard()
+    }
+
+    private func adjustFontSize(by delta: CGFloat) {
+        guard selectedRange.location != NSNotFound else { return }
+
+        saveCurrentStateAndRegisterForUndo()
+
+        if selectedRange.length != 0 {
+            textStorage.enumerateAttribute(.font, in: selectedRange, options: .longestEffectiveRangeNotRequired) { value, range, _ in
+                let currentFont = (value as? UIFont) ?? NotesFontProvider.shared.bodyFont
+                let adjustedSize = min(maximumFontSize, max(minimumFontSize, currentFont.pointSize + delta))
+                let updatedFont = UIFont(descriptor: currentFont.fontDescriptor, size: adjustedSize)
+
+                textStorage.beginEditing()
+                textStorage.addAttribute(.font, value: updatedFont, range: range)
+                textStorage.endEditing()
+            }
+        }
+
+        let currentFont = (selectedRange.length == 0)
+            ? (typingAttributes[.font] as? UIFont ?? NotesFontProvider.shared.bodyFont)
+            : (textStorage.attribute(.font, at: selectedRange.location, effectiveRange: nil) as? UIFont ?? NotesFontProvider.shared.bodyFont)
+
+        let adjustedSize = min(maximumFontSize, max(minimumFontSize, currentFont.pointSize + delta))
+        typingAttributes[.font] = UIFont(descriptor: currentFont.fontDescriptor, size: adjustedSize)
+
+        updateVisualForKeyboard()
+    }
+}
+
+@available(iOS 13.0, *)
+extension NotesTextView: UIFontPickerViewControllerDelegate {
+    public func fontPickerViewControllerDidPickFont(_ viewController: UIFontPickerViewController) {
+        guard let descriptor = viewController.selectedFontDescriptor else { return }
+        applyFontDescriptor(descriptor)
+    }
+
+    public func fontPickerViewControllerDidCancel(_ viewController: UIFontPickerViewController) {
+        viewController.dismiss(animated: true)
     }
 }

@@ -11,9 +11,9 @@ import UIKit
 class TextStyleView: UIView {
     let label = UILabel()
 
-    let activeBackgroundColor = #colorLiteral(red: 0.5097514391, green: 0.5098407865, blue: 0.509739697, alpha: 1)
-    let inactiveBackgroundColor = UIColor.clear
-    let activeTextColor = UIColor.white
+    let activeBackgroundColor = UIColor.systemGray4
+    let inactiveBackgroundColor = UIColor.systemGray6
+    let activeTextColor = UIColor.label
     let inactiveTextColor = UIColor.secondaryLabel
 
     let tapGesture = UITapGestureRecognizer()
@@ -23,9 +23,17 @@ class TextStyleView: UIView {
 
         addSubview(label)
         label.textAlignment = .center
-        label.centerInSuperview()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true
+        label.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+        label.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 8).isActive = true
+        label.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8).isActive = true
+        label.setContentCompressionResistancePriority(UILayoutPriority(250), for: .horizontal)
+        label.setContentHuggingPriority(UILayoutPriority(250), for: .horizontal)
         translatesAutoresizingMaskIntoConstraints = false
-        widthAnchor.constraint(equalTo: label.widthAnchor, multiplier: 1, constant: 22).isActive = true
+        let widthConstraint = widthAnchor.constraint(equalTo: label.widthAnchor, multiplier: 1, constant: 22)
+        widthConstraint.priority = UILayoutPriority(750)
+        widthConstraint.isActive = true
         addGestureRecognizer(tapGesture)
     }
 

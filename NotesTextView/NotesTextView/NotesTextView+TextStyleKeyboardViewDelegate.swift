@@ -85,17 +85,6 @@ extension NotesTextView: TextStyleKeyboardViewDelegate {
         }
     }
     
-    // 辅助方法来查找当前的 view controller
-    private func findViewController() -> UIViewController? {
-        var responder: UIResponder? = self
-        while responder != nil {
-            responder = responder?.next
-            if let viewController = responder as? UIViewController {
-                return viewController
-            }
-        }
-        return nil
-    }
 }
 
 @available(iOS 14.0, *)

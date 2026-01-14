@@ -215,6 +215,10 @@ public class NotesTextView: UITextView {
         styleKeyboard.leftIndentButton.addTarget(self, action: #selector(indentLeft), for: .touchUpInside)
         styleKeyboard.rightIndentButton.addTarget(self, action: #selector(indentRight), for: .touchUpInside)
 
+        styleKeyboard.fontSelectButton.tapGesture.addTarget(self, action: #selector(showFontPicker))
+        styleKeyboard.decreaseFontSizeButton.addTarget(self, action: #selector(decreaseFontSize), for: .touchUpInside)
+        styleKeyboard.increaseFontSizeButton.addTarget(self, action: #selector(increaseFontSize), for: .touchUpInside)
+
         styleKeyboard.titleButton.tapGesture.addTarget(self, action: #selector(useTitle))
         styleKeyboard.headingButton.tapGesture.addTarget(self, action: #selector(useHeading))
         styleKeyboard.bodyButton.tapGesture.addTarget(self, action: #selector(useBody))
@@ -228,6 +232,17 @@ public class NotesTextView: UITextView {
 
         styleKeyboard.orderedListButton.addTarget(self, action: #selector(toggleOrderedList), for: .touchUpInside)
         styleKeyboard.unorderedListButton.addTarget(self, action: #selector(toggleUnorderedList), for: .touchUpInside)
+    }
+
+    func findViewController() -> UIViewController? {
+        var responder: UIResponder? = self
+        while responder != nil {
+            responder = responder?.next
+            if let viewController = responder as? UIViewController {
+                return viewController
+            }
+        }
+        return nil
     }
 
     private func prepareAccessoryView() {

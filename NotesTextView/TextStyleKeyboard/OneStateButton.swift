@@ -14,9 +14,9 @@ import UIKit
 // This button can be used for Changing the Text Indents.
 
 class OneStateButton: UIButton {
-    let activeBackgroundColor = #colorLiteral(red: 0.5097514391, green: 0.5098407865, blue: 0.509739697, alpha: 1)
+    let activeBackgroundColor = UIColor.systemGray4
     let inactiveBackgroundColor = UIColor.systemGray6
-    let activeTextColor = UIColor.white
+    let activeTextColor = UIColor.label
     let inactiveTextColor = UIColor.secondaryLabel
 
     override var isHighlighted: Bool {

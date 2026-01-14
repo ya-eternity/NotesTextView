@@ -49,6 +49,14 @@ class TextStyleKeyboardView: UIView {
     let scrollContainerView = UIView()
 
     let keyboardContainerView = UIView()
+    private let titleLabel = UILabel()
+
+    // MARK: - Font Controls
+
+    let fontSelectButton = TextStyleView()
+    let decreaseFontSizeButton = OneStateButton()
+    let increaseFontSizeButton = OneStateButton()
+    private let fontSizeStack = UIStackView()
 
     // MARK: - Color Maps
 
@@ -94,6 +102,7 @@ class TextStyleKeyboardView: UIView {
     let buttonHeight: CGFloat = 50
     let buttonCornerRadius: CGFloat = 10
     let styleScrollInset: CGFloat = 12
+    let fontSelectButtonWidth: CGFloat = 140
 
     // MARK: - Layout stacks
 
@@ -119,6 +128,9 @@ class TextStyleKeyboardView: UIView {
 
         addSubview(keyboardContainerView)
         keyboardContainerView.fillSuperview()
+        keyboardContainerView.backgroundColor = .systemBackground
+        keyboardContainerView.layer.cornerRadius = 16
+        keyboardContainerView.layer.masksToBounds = true
 
         keyboardContainerView.addSubview(scrollContainerView)
         scrollContainerView.addSubview(styleScrollView)
@@ -126,24 +138,24 @@ class TextStyleKeyboardView: UIView {
 
         keyboardContainerView.addSubview(completeStack)
 
-        scrollContainerView.anchor(top: keyboardContainerView.topAnchor, leading: completeStack.leadingAnchor, bottom: nil, trailing: completeStack.trailingAnchor, padding: .init(top: 20, left: 0, bottom: 0, right: 40))
+        setupHeader()
+
+        scrollContainerView.anchor(top: titleLabel.bottomAnchor, leading: keyboardContainerView.safeAreaLayoutGuide.leadingAnchor, bottom: nil, trailing: keyboardContainerView.safeAreaLayoutGuide.trailingAnchor, padding: .init(top: 12, left: 16, bottom: 0, right: 16))
 
         styleScrollView.contentInset = .init(top: 0, left: styleScrollInset, bottom: 0, right: styleScrollInset)
         scrollContainerView.constrainHeight(constant: buttonHeight)
 
-        completeStack.anchor(top: scrollContainerView.bottomAnchor, leading: nil, bottom: nil, trailing: nil, padding: .init(top: 20, left: 0, bottom: 0, right: 0))
-        completeStack.centerXAnchor.constraint(equalTo: centerXAnchor, constant: 8).isActive = true
-
-        setupReturnButton()
+        completeStack.anchor(top: scrollContainerView.bottomAnchor, leading: keyboardContainerView.safeAreaLayoutGuide.leadingAnchor, bottom: nil, trailing: keyboardContainerView.safeAreaLayoutGuide.trailingAnchor, padding: .init(top: 16, left: 16, bottom: 0, right: 16))
 
         textColorPicker.delegate = self
         highlightColorPicker.delegate = self
 
-        backgroundColor = .tertiarySystemBackground
+        backgroundColor = .systemBackground
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.2
         layer.shadowOffset = .zero
         layer.shadowRadius = 10
+        layer.cornerRadius = 16
     }
 
     @available(*, unavailable)
@@ -212,15 +224,32 @@ class TextStyleKeyboardView: UIView {
             highlightColorPicker.selectedColor = UIColor(white: 0, alpha: 0.001) // 使用一个不在列表中的颜色来清除选中状态
             if colorSegmentControl.selectedSegmentIndex == 1 {
                 // 添加圆形边框
-                systemColorPickerButton.layer.borderWidth = 2.0
+                systemColorPickerButton.layer.borderWidth = 3.0
                 systemColorPickerButton.layer.borderColor = highlighColor?.cgColor
-                systemColorPickerButton.layer.cornerRadius = buttonHeight / 2
+                systemColorPickerButton.layer.cornerRadius = 20
             }
         }
 
         leftAlignButton.isActive = textAlignment == .left
         centerAlignButton.isActive = textAlignment == .center
         rightAlignButton.isActive = textAlignment == .right
+    }
+
+    func updateFontSelectionDisplay(currentFont: UIFont?) {
+        let displayName: String
+        let displayFont: UIFont
+
+        if let font = currentFont {
+            let familyName = font.familyName
+            displayName = familyName.hasPrefix(".") ? "System" : familyName
+            displayFont = font.withSize(16)
+        } else {
+            displayName = "Font"
+            displayFont = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        }
+
+        fontSelectButton.label.text = displayName
+        fontSelectButton.label.font = displayFont
     }
 
     // MARK: - Setup Keyboard Layout
@@ -362,16 +391,72 @@ class TextStyleKeyboardView: UIView {
         unorderedListButton.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
     }
 
+    private func setupFontControls() {
+        fontSelectButton.label.text = "Font"
+        fontSelectButton.label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        fontSelectButton.label.adjustsFontSizeToFitWidth = true
+        fontSelectButton.label.minimumScaleFactor = 0.7
+        fontSelectButton.label.lineBreakMode = .byTruncatingTail
+        fontSelectButton.layer.cornerRadius = buttonCornerRadius
+        fontSelectButton.constrainHeight(constant: buttonHeight)
+        fontSelectButton.constrainWidth(constant: fontSelectButtonWidth)
+        fontSelectButton.isActive = false
+
+        decreaseFontSizeButton.setTitle("A-", for: .normal)
+        increaseFontSizeButton.setTitle("A+", for: .normal)
+
+        let sizeButtonInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+        decreaseFontSizeButton.contentEdgeInsets = sizeButtonInsets
+        increaseFontSizeButton.contentEdgeInsets = sizeButtonInsets
+
+        let sizeButtonFont = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        decreaseFontSizeButton.titleLabel?.font = sizeButtonFont
+        increaseFontSizeButton.titleLabel?.font = sizeButtonFont
+
+        decreaseFontSizeButton.setTitleColor(.secondaryLabel, for: .normal)
+        decreaseFontSizeButton.setTitleColor(.label, for: .highlighted)
+        increaseFontSizeButton.setTitleColor(.secondaryLabel, for: .normal)
+        increaseFontSizeButton.setTitleColor(.label, for: .highlighted)
+
+        decreaseFontSizeButton.isHighlighted = true
+        decreaseFontSizeButton.isHighlighted = false
+        increaseFontSizeButton.isHighlighted = true
+        increaseFontSizeButton.isHighlighted = false
+
+        decreaseFontSizeButton.constrainHeight(constant: buttonHeight)
+        increaseFontSizeButton.constrainHeight(constant: buttonHeight)
+
+        decreaseFontSizeButton.layer.cornerRadius = buttonCornerRadius
+        decreaseFontSizeButton.layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
+
+        increaseFontSizeButton.layer.cornerRadius = buttonCornerRadius
+        increaseFontSizeButton.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
+
+        fontSizeStack.axis = .horizontal
+        fontSizeStack.spacing = buttonSpacing
+        fontSizeStack.distribution = .fill
+        fontSizeStack.addArrangedSubview(decreaseFontSizeButton)
+        fontSizeStack.addArrangedSubview(increaseFontSizeButton)
+    }
+
     private func setupTextStyleScrollView() {
+        setupFontControls()
+
         titleButton.label.text = "Title"
         titleButton.label.font = NotesFontProvider.shared.titleFont
         titleButton.layer.cornerRadius = buttonCornerRadius
         titleButton.constrainHeight(constant: buttonHeight)
+        titleButton.constrainWidth(constant: titleButton.label.intrinsicContentSize.width + 22)
+        titleButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        titleButton.setContentHuggingPriority(.required, for: .horizontal)
 
         headingButton.label.text = "Heading"
         headingButton.label.font = NotesFontProvider.shared.headingFont
         headingButton.layer.cornerRadius = buttonCornerRadius
         headingButton.constrainHeight(constant: buttonHeight)
+        headingButton.constrainWidth(constant: headingButton.label.intrinsicContentSize.width + 22)
+        headingButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        headingButton.setContentHuggingPriority(.required, for: .horizontal)
 
         bodyButton.label.text = "Body"
 
@@ -387,6 +472,9 @@ class TextStyleKeyboardView: UIView {
 
         bodyButton.layer.cornerRadius = buttonCornerRadius
         bodyButton.constrainHeight(constant: buttonHeight)
+        bodyButton.constrainWidth(constant: bodyButton.label.intrinsicContentSize.width + 22)
+        bodyButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        bodyButton.setContentHuggingPriority(.required, for: .horizontal)
 
         serifButton.label.text = "Serif"
 
@@ -411,7 +499,10 @@ class TextStyleKeyboardView: UIView {
         textStyleStack.addArrangedSubview(titleButton)
         textStyleStack.addArrangedSubview(headingButton)
         textStyleStack.addArrangedSubview(bodyButton)
+        textStyleStack.addArrangedSubview(fontSelectButton)
+        textStyleStack.addArrangedSubview(fontSizeStack)
         textStyleStack.addArrangedSubview(serifButton)
+        serifButton.isHidden = true
 
         textStyleStack.spacing = 5
 
@@ -448,6 +539,10 @@ class TextStyleKeyboardView: UIView {
 
         colorSegmentControl.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.secondaryLabel], for: .normal)
         colorSegmentControl.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.label], for: .selected)
+        colorSegmentControl.selectedSegmentTintColor = .systemGray5
+        colorSegmentControl.backgroundColor = .systemGray6
+        colorSegmentControl.layer.cornerRadius = 8
+        colorSegmentControl.layer.masksToBounds = true
 
         colorSegmentControl.setImage(textIcon, forSegmentAt: 0)
         colorSegmentControl.setImage(hightlightIcon, forSegmentAt: 1)
@@ -471,6 +566,8 @@ class TextStyleKeyboardView: UIView {
         let colorPickerImage = UIImage(systemName: "eyedropper", withConfiguration: iconConfig)
         systemColorPickerButton.setImage(colorPickerImage, for: .normal)
         systemColorPickerButton.tintColor = .systemGray
+        systemColorPickerButton.backgroundColor = .systemGray6
+        systemColorPickerButton.layer.cornerRadius = 20
         systemColorPickerButton.constrainHeight(constant: 40)
         systemColorPickerButton.constrainWidth(constant: 40)
         systemColorPickerButton.addTarget(self, action: #selector(systemColorPickerButtonTapped), for: .touchUpInside)
@@ -523,19 +620,34 @@ class TextStyleKeyboardView: UIView {
         completeStack.addArrangedSubview(alignmentAndIndentStack)
         completeStack.addArrangedSubview(colorStack)
         completeStack.axis = .vertical
-        completeStack.spacing = 20
+        completeStack.spacing = 16
+    }
+
+    private func setupHeader() {
+        titleLabel.text = "Format"
+        titleLabel.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        titleLabel.textColor = .label
+
+        keyboardContainerView.addSubview(titleLabel)
+        titleLabel.anchor(top: keyboardContainerView.topAnchor, leading: keyboardContainerView.safeAreaLayoutGuide.leadingAnchor, bottom: nil, trailing: nil, padding: .init(top: 10, left: 16, bottom: 0, right: 0))
+
+        setupReturnButton()
     }
 
     private func setupReturnButton() {
-        let crossImage = UIImage(systemName: "xmark", withConfiguration: iconConfig)
+        let closeConfig = UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold, scale: .medium)
+        let crossImage = UIImage(systemName: "xmark", withConfiguration: closeConfig)
         returnButton.setImage(crossImage, for: .normal)
-        returnButton.tintColor = #colorLiteral(red: 0.7215686275, green: 0.7215686275, blue: 0.7215686275, alpha: 1)
+        returnButton.tintColor = .secondaryLabel
+        returnButton.backgroundColor = .systemGray5
+        returnButton.layer.cornerRadius = 14
+        returnButton.clipsToBounds = true
 
-        addSubview(returnButton)
+        keyboardContainerView.addSubview(returnButton)
         returnButton.translatesAutoresizingMaskIntoConstraints = false
-        returnButton.anchor(top: topAnchor, leading: nil, bottom: nil, trailing: safeAreaLayoutGuide.trailingAnchor, padding: .init(top: 10, left: 0, bottom: 0, right: 10))
-        returnButton.constrainHeight(constant: 44)
-        returnButton.constrainWidth(constant: 44)
+        returnButton.anchor(top: keyboardContainerView.topAnchor, leading: nil, bottom: nil, trailing: keyboardContainerView.safeAreaLayoutGuide.trailingAnchor, padding: .init(top: 8, left: 0, bottom: 0, right: 12))
+        returnButton.constrainHeight(constant: 28)
+        returnButton.constrainWidth(constant: 28)
     }
 
     private func adjustScrollForTextStyle(style: NotesTextView.TextStyle) {

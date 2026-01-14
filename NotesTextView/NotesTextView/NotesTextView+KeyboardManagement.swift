@@ -166,6 +166,7 @@ extension NotesTextView {
         let currentListType = getCurrentListType()
 
         styleKeyboard.typingAttributeUpdates(currentTextStyle: currentTextStyle, isBold: isBold, isItalics: isItalics, isUnderline: hasUnderline, hasStrikethrough: hasStrikethrough, disableLeftIndent: shouldLeftIndentDisabled, disableRightIndent: shouldRightIndentDisabled, textColor: selectedTextColor, highlighColor: selectedHighlightColor, textAlignment: currentAlignment, listType: currentListType)
+        styleKeyboard.updateFontSelectionDisplay(currentFont: currentFont)
 
         leftIndentButtonMain.isEnabled = !shouldLeftIndentDisabled
         rightIndentButtonMain.isEnabled = !shouldRightIndentDisabled
